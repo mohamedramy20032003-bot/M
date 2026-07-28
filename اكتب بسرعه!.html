@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Speed Keyboard Master</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .game-container { background: #16213e; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 400px; }
+        #word-display { font-size: 2.5rem; color: #e94560; margin: 20px 0; }
+        #word-input { padding: 10px; width: 80%; font-size: 1.2rem; border-radius: 5px; border: none; }
+        .stats { display: flex; justify-content: space-between; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>اختبار السرعة</h1>
+    <div id="word-display">ابدأ الآن</div>
+    <input type="text" id="word-input" placeholder="اكتب الكلمة هنا..." autofocus>
+    <div class="stats">
+        <span>النتيجة: <span id="score">0</span></span>
+        <span>الوقت: <span id="time">10</span>s</span>
+    </div>
+</div>
+
+<script>
+    const words = ["برمجة", "حاسوب", "ذكاء", "انترنت", "تطوير", "تصميم", "بيانات", "خوارزمية"];
+    let score = 0; let time = 10; let currentWord;
+
+    const wordDisplay = document.getElementById('word-display');
+    const wordInput = document.getElementById('word-input');
+    const scoreEl = document.getElementById('score');
+    const timeEl = document.getElementById('time');
+
+    function nextWord() {
+        currentWord = words[Math.floor(Math.random() * words.length)];
+        wordDisplay.innerText = currentWord;
+        wordInput.value = '';
+    }
+
+    wordInput.addEventListener('input', () => {
+        if(wordInput.value === currentWord) {
+            score++;
+            time += 2; // مكافأة وقت
+            scoreEl.innerText = score;
+            nextWord();
+        }
+    });
+
+    const timer = setInterval(() => {
+        time--;
+        timeEl.innerText = time;
+        if(time <= 0) {
+            clearInterval(timer);
+            alert("انتهت اللعبة! نتيجتك النهائية: " + score);
+            location.reload();
+        }
+    }, 1000);
+
+    nextWord();
+</script>
+</body>
+</html>
