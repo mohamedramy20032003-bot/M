@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monster Engine V.PRO - Reversed</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+    <style>
+        body { margin:0; display:flex; height:100vh; background:#121212; color:#fff; font-family: sans-serif; overflow: hidden; }
+        
+        /* القسم الأيسر: المحررات */
+        #left-side { width: 50%; display: flex; flex-direction: column; border-right: 2px solid #ff0055; }
+        .editor { flex: 1; border: 1px solid #333; }
+        
+        /* القسم الأيمن: النتيجة */
+        #right-side { width: 50%; display: flex; flex-direction: column; }
+        #preview { flex: 1; background: white; border: none; }
+        
+        .toolbar { padding: 10px; background:#181818; display:flex; gap: 5px; flex-wrap: wrap; }
+        button { background:#ff0055; color:white; border:none; padding: 6px 12px; cursor:pointer; font-size: 12px; }
+        #console { height: 80px; background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 11px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<div id="left-side">
+    <div class="toolbar">
+        <button onclick="run()">▶ Run</button>
+        <button onclick="document.getElementById('fileIn').click()">📂 Assets</button>
+        <button onclick="saveAll()">💾 Save</button>
+        <button onclick="downloadFile()">📥 Download</button>
+        <input type="file" id="fileIn" style="display:none" onchange="uploadAsset(event)">
+    </div>
+    <div id="htmlEd" class="editor"></div>
+    <div id="cssEd" class="editor"></div>
+    <div id="jsEd" class="editor"></div>
+</div>
+
+<div id="right-side">
+    <iframe id="preview"></iframe>
+    <div id="console">Engine ready...</div>
+</div>
+
+<script>
+    const eds = {
+        h: ace.edit("htmlEd"),
+        c: ace.edit("cssEd"),
+        j: ace.edit("jsEd")
+    };
+
+    Object.values(eds).forEach(ed => {
+        ed.setTheme("ace/theme/monokai");
+        ed.session.setMode("ace/mode/html");
+        ed.container.style.direction = "ltr";
+    });
+
+    // ميزة (!)
+    eds.h.commands.addCommand({
+        name: 'emmet', bindKey: {win: 'Enter', mac: 'Enter'},
+        exec: (ed) => {
+            if (ed.getValue().trim() === '!') {
+                ed.setValue("<!DOCTYPE html>\n<html>\n<head>\n<meta charset='UTF-8'>\n</head>\n<body>\n<h1>Hello Monster!</h1>\n</body>\n</html>");
+            } else { ed.insert("\n"); }
+        }
+    });
+
+    function uploadAsset(e) {
+        const file = e.target.files[0];
+        const url = URL.createObjectURL(file);
+        document.getElementById('console').innerHTML += `<br>> Asset: ${file.name} -> ${url}`;
+    }
+
+    function run() {
+        const preview = document.getElementById('preview');
+        const code = `
+            <style>${eds.c.getValue()}</style>
+            ${eds.h.getValue()}
+            <script>${eds.j.getValue()}<\/script>
+        `;
+        preview.srcdoc = code;
+        document.getElementById('console').innerHTML += "<br>> System: Updated Preview";
+    }
+
+    function saveAll() {
+        localStorage.setItem("m_html", eds.h.getValue());
+        localStorage.setItem("m_css", eds.c.getValue());
+        localStorage.setItem("m_js", eds.j.getValue());
+        document.getElementById('console').innerHTML += "<br>> System: Saved!";
+    }
+
+    function downloadFile() {
+        const full = `<!DOCTYPE html><html><head><style>${eds.c.getValue()}</style></head><body>${eds.h.getValue()}<script>${eds.j.getValue()}<\/script></body></html>`;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([full], {type: "text/html"}));
+        a.download = "index.html";
+        a.click();
+    }
+
+    window.onload = () => {
+        if(localStorage.m_html) eds.h.setValue(localStorage.m_html);
+        if(localStorage.m_css) eds.c.setValue(localStorage.m_css);
+        if(localStorage.m_js) eds.j.setValue(localStorage.m_js);
+    };
+</script>
+</body>
+</html>
