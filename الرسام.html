@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة الرسم الرقمي التفاعلية</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; 
+            min-height: 100vh; 
+            overflow: hidden;
+        }
+        .canvas-container { 
+            background: #1e293b; 
+            padding: 1rem; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            text-align: center; 
+            width: 95vw; 
+            height: 90vh; 
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box;
+            margin-top: 1vh;
+        }
+        h2 { 
+            color: #38bdf8; 
+            margin: 0 0 10px 0; 
+            font-size: 1.5rem;
+        }
+        .toolbar { 
+            margin-bottom: 10px; 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            align-items: center; 
+            flex-wrap: wrap; 
+        }
+        label { 
+            font-size: 0.9rem; 
+            color: #94a3b8; 
+        }
+        input[type="color"] { 
+            border: none; 
+            width: 30px; 
+            height: 30px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            background: none; 
+        }
+        input[type="range"] { 
+            accent-color: #0ea5e9; 
+            cursor: pointer; 
+        }
+        button { 
+            padding: 6px 12px; 
+            background: #0ea5e9; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 0.9rem;
+        }
+        button:hover { 
+            background: #0284c7; 
+        }
+        .clear-btn { 
+            background: #ef4444; 
+        }
+        .clear-btn:hover { 
+            background: #dc2626; 
+        }
+        .fs-btn {
+            background: #10b981;
+        }
+        .fs-btn:hover {
+            background: #059669;
+        }
+        canvas { 
+            background: #ffffff; 
+            border-radius: 8px; 
+            cursor: crosshair; 
+            flex: 1; 
+            width: 100%; 
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="canvas-container" id="container">
+    <h2>لوحة الرسم الرقمي</h2>
+    <div class="toolbar">
+        <label>اللون:</label>
+        <input type="color" id="color-picker" value="#0f172a">
+        
+        <label>الحجم:</label>
+        <input type="range" id="size-picker" min="1" max="25" value="5">
+        
+        <button id="clear-btn" class="clear-btn">مسح الكل</button>
+        <button id="save-btn">حفظ كصورة</button>
+        <button id="fs-btn" class="fs-btn">ملء الشاشة</button>
+    </div>
+    
+    <canvas id="drawing-canvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('drawing-canvas');
+    const container = document.getElementById('container');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('color-picker');
+    const sizePicker = document.getElementById('size-picker');
+    const clearBtn = document.getElementById('clear-btn');
+    const saveBtn = document.getElementById('save-btn');
+    const fsBtn = document.getElementById('fs-btn');
+
+    let isDrawing = false;
+
+    // ضبط أبعاد الـ Canvas لتعمل بملء المساحة المتاحة بدقة
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        // حفظ الرسم القديم إن وجد لكي لا يمسح عند تغيير الحجم
+        const tempImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        ctx.putImageData(tempImage, 0, 0);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('load', () => {
+        resizeCanvas();
+    });
+
+    function startDrawing(e) {
+        isDrawing = true;
+        draw(e);
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        ctx.beginPath();
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.strokeStyle = colorPicker.value;
+        ctx.lineWidth = sizePicker.value;
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    // أحداث الماوس
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mousemove', draw);
+
+    // أحداث اللمس للهواتف والأجهزة اللوحية
+    canvas.addEventListener('touchstart', (e) => { startDrawing(e); e.preventDefault(); });
+    canvas.addEventListener('touchend', (e) => { stopDrawing(); e.preventDefault(); });
+    canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
+
+    // مسح اللوحة
+    clearBtn.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    // حفظ اللوحة كصورة
+    saveBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'my-drawing.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // ميزة ملء الشاشة (Fullscreen API)
+    fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+                alert(`خطأ في تفعيل ملء الشاشة: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
+</script>
+</body>
+</html>
